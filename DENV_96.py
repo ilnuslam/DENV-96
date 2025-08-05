@@ -251,6 +251,15 @@ def denv_96():
     elif file_type[1] == ".db":
         # 打开db文件
         data = sqlio.get_sql_list(input_source, "imported_data", ["id", "original_file_name", "updated_time"])
+        print("从数据库中提取")
+        level, result = data[-2], data[-1]
+        if type(result) is int:
+            result = [result]
+        elif "," in result:
+            result = [int(num) for num in result.split(",")]
+        elif not result:
+            result = [100]
+        data = data[:-2]
     else:
         print("document error!")
 
@@ -265,29 +274,35 @@ def denv_96():
     preview_data = ['-1' if item == '' else item for item in preview_data]
     img_share = (preview_data, [-1])
 
-    nc_count = get_integer_input("请输入阴性对照个数：")
-    nc_count = int(nc_count)
+    if file_type[1] == ".xls":
+        nc_count = get_integer_input("请输入阴性对照个数：")
+        nc_count = int(nc_count)
 
-    nc_exc = []
-    if nc_count == 0:
-        level = input("输入阴性均值：").strip()
-        result = [100]
-    else:
-        for i in range(nc_count):
-            element = input(f"请输入第{i+1}个阴性对照格号(如A1)：")
-            nc_exc.append(element)
-        #根据输入的单元格格式nc_exc转换成列表排序
-        letters = [item[0] for item in nc_exc if item[0].isalpha()]
-        numbers = [extract_last_one_or_two_digits(s) for s in nc_exc]
-        letter_tr = convert_letters_to_numbers(letters)
-        result = [12 * (int(x) - 1) + (int(y) - 1) for x, y in zip(letter_tr, numbers)]
-
+        if nc_count == 0:
+            level = input("输入阴性均值：").strip()
+            nc_level = level
+            nc_location = []
+            result = [100]
+        else:
+            nc_exc = []
+            for i in range(nc_count):
+                element = input(f"请输入第{i+1}个阴性对照格号(如A1)：")
+                nc_exc.append(element)
+            #根据输入的单元格格式nc_exc转换成列表排序
+            letters = [item[0] for item in nc_exc if item[0].isalpha()]
+            numbers = [extract_last_one_or_two_digits(s) for s in nc_exc]
+            letter_tr = convert_letters_to_numbers(letters)
+            result = [12 * (int(x) - 1) + (int(y) - 1) for x, y in zip(letter_tr, numbers)]
+            nc_location = result
+    
+    if result != [100]:
+        nc_level = ""
         #从data检索nc对应数值
         nc_num = [data[i] for i in result]
 
         #计算均值，返回均值（如果有空字符串则删除后再计算平均值）
         level = get_nonempty_list(nc_num)
-        print("阴性均值：",level)
+    print("阴性均值：",level)
 
     show = compare_list_with_number(np.array(np.asarray(cleaned_data, dtype=float)), np.asarray(level, dtype=float))
     img_share = (show, result)
@@ -311,7 +326,7 @@ def denv_96():
 
         print(os.path.dirname(save_path) + "/test.db")
         sqlio.create_table(os.path.dirname(save_path) + "/test.db")
-        sqlio.insert_from_list(list(data), os.path.dirname(save_path) + "/test.db", file_name)
+        sqlio.insert_from_list(list(data), nc_level, nc_location, os.path.dirname(save_path) + "/test.db", file_name)
 
     elif save_prog == 'n':
         pass

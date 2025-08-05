@@ -1,4 +1,5 @@
-﻿import sqlite3
+﻿from socket import AI_V4MAPPED
+import sqlite3
 from sqlite3 import Error
 import random
 from prettytable import PrettyTable
@@ -19,6 +20,8 @@ def create_table(db_file):
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         original_file_name TEXT,
         updated_time TIMESTAMP DEFAULT (datetime('now', 'localtime')),
+        nc_level REAL,
+        nc_location INTEGER,
         {', '.join(columns)}
     )
     """
@@ -27,7 +30,7 @@ def create_table(db_file):
         # 执行创建表
         cursor.execute(sql_create_table)
         conn.commit()
-        print("表创建成功，包含A1-H12共96列")
+        print("表创建成功")
         
         # 验证表结构
         cursor.execute("PRAGMA table_info(imported_data)")
@@ -42,14 +45,15 @@ def create_table(db_file):
         conn.close()
 
 
-def insert_from_list(data_list, db_file, original_file_name):
+def insert_from_list(data_list, nc_level, nc_location, db_file, original_file_name):
     """
     从列表数据源插入数据
     :param data_list: 二维列表，每个子列表包含96个元素对应A1-H12
     :param db_name: 数据库文件名
     """
     #data_list = data_list[0]
-    append_data = [original_file_name] + data_list
+    nc_location = ", ".join(map(str, nc_location))
+    append_data = [original_file_name] + data_list + [nc_level] + [nc_location]
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
     
@@ -58,7 +62,7 @@ def insert_from_list(data_list, db_file, original_file_name):
     for letter in 'ABCDEFGH':
         for num in range(1, 13):
             columns.append(f"{letter}{num}")
-    columns = ["original_file_name"] + columns
+    columns = ["original_file_name"] + columns + ["nc_level"] + ["nc_location"]
     
     # 准备SQL语句
     placeholders = ', '.join(['?'] * len(columns))
@@ -135,8 +139,11 @@ def get_sql_list(db_file, table_name, columns):
         for letter in 'ABCDEFGH':
             for num in range(1, 13):
                 columns.append(f"{letter}{num}")
+        columns = columns + ["nc_level"] + ["nc_location"]
 
+        # 生成查询语句
         query = f"SELECT {', '.join(columns)} FROM {table_name} WHERE id = ?"
+
         # 执行查询
         cursor.execute(query, (target_id,))
         
@@ -160,10 +167,10 @@ def generate_sample_data(rows):
     return out[0]
 
 if __name__ == '__main__':
-    path = r"D:\test.db"
+    path = r"C:\Users\lin-z\Desktop\test.db"
 
     get_sql_list(path, "imported_data", ["id", "original_file_name", "updated_time"])
 
     #create_table(path)
 
-    #insert_from_list(generate_sample_data(1), path, original_file_name = "20250726.xls")
+    #insert_from_list(generate_sample_data(1),"123.45", [], path, original_file_name = "20250726.xls")
