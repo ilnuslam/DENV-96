@@ -19,7 +19,7 @@ import sqlio
 
 def choose_xls_doc():
     #选择文件
-    print("please choose .xls doc")
+    print("please choose document")
     root = tk.Tk()
     root.withdraw()
     root.attributes('-topmost', 1)
@@ -236,7 +236,6 @@ def denv_96():
     input_source, file_type = choose_xls_doc()
     path = os.path.dirname(input_source)
     file_name = os.path.basename(input_source)
-    print(file_type[1])
 
     if file_type[1] == ".xls":
         workbook = xlrd.open_workbook(input_source)        # 打开Excel文件
@@ -320,7 +319,7 @@ def denv_96():
             print(save_path)
             ext = save_path[-4:]
             cv2.imencode(ext, save_data)[1].tofile(save_path)
-            print(f"Image saved to {save_path}")
+            #print(f"Image saved to {save_path}")
         else:
             print("No file path selected.")
 

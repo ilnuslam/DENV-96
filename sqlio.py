@@ -112,8 +112,9 @@ def get_sql_list(db_file, table_name, columns):
         for row in results:
             table.add_row(row)
 
-        print(table, len(results))
-        target_id = input("choose a id:")
+        print(table)
+        print("共", len(results), "条记录")
+        target_id = input("enter an id number:")
 
         # 构建查询语句
         query = f"SELECT {', '.join(columns)} FROM {table_name} WHERE id = ?"
